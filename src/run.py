@@ -77,7 +77,7 @@ layout = graph_objs.Layout(
             size=18
         )
     ),
-    title="Top Tracks of 2017",
+    title="Billboard Top Tracks of 2017",
     titlefont=dict(
         family='"Open Sans", sans-serif',
         size=36
