@@ -1,5 +1,6 @@
 import requests
 from datetime import date
+import os
 
 
 class Song:
@@ -13,6 +14,20 @@ class Song:
         self.wks_on_chart = -1
         self.awards = []  # Not all songs will have awards
 
+    def __str__(self):
+        out = ''
+        out += 'Chart position: ' + str(self.chart_pos) + os.linesep
+        out += 'Title: ' + self.title + os.linesep
+        out += 'Artist: ' + self.artist + os.linesep
+        out += 'Last week: ' + str(self.last_week) + os.linesep
+        out += 'Weeks on chart: ' + str(self.wks_on_chart) + os.linesep
+        out += 'Peak: ' + str(self.peak_pos) + os.linesep
+        out += 'Album Art url: ' + self.album_art_url + os.linesep
+        out += 'Awards: ' + os.linesep
+        for a in self.awards:
+            out += '\t' + a + os.linesep
+        return out
+
 
 class Hot100Chart:
     def __init__(self):
@@ -24,7 +39,7 @@ class Hot100Chart:
     __ARTICLE_TAG = '<article class="chart-row chart-row--'
     __CHART_POSITION = '<span class="chart-row__current-week">'
     __LAST_WEEK_POS = '<span class="chart-row__last-week">Last Week: '
-    __ARTIST = '<span class="chart-row__artist">'
+    __ARTIST = 'class="chart-row__artist"'
     __TITLE = '<h2 class="chart-row__song">'
     __ALBUM_ART_URL = '<div class="chart-row__image" style="background-image: url('
 
@@ -44,8 +59,8 @@ class Hot100Chart:
         chart_url = Hot100Chart.__URL + week_str
 
         # download html
-        r = requests.get(week_str)
-        if r.response_code != 200:
+        r = requests.get(chart_url)
+        if r.status_code != 200:
             # Ensure that the day of the week is a Saturday
             if self.week.weekday() != 5:
                 days = 5 - self.week.weekday()
@@ -60,7 +75,7 @@ class Hot100Chart:
             chart_url = Hot100Chart.__URL + week_str
 
             # download html
-            r = requests.get(week_str)
+            r = requests.get(chart_url)
         html = r.text
 
         # compile chart
@@ -83,21 +98,26 @@ class Hot100Chart:
             # Get last weeks position
             start = song_raw.index(Hot100Chart.__LAST_WEEK_POS) + len(Hot100Chart.__LAST_WEEK_POS)
             end = song_raw.index('</', start)
-            song.last_week = int(song_raw[start:end])
+            try:
+                song.last_week = int(song_raw[start:end])
+            except ValueError:
+                song.last_week = -1
 
             # Get album art URL
-            start = song_raw.index(Hot100Chart.__ALBUM_ART_URL) + len(Hot100Chart.__ALBUM_ART_URL)
-            end = song_raw.index(')">', start)
-            song.album_art_url = song_raw[start:end]
+            if song_raw.__contains__(Hot100Chart.__ALBUM_ART_URL):
+                start = song_raw.index(Hot100Chart.__ALBUM_ART_URL) + len(Hot100Chart.__ALBUM_ART_URL)
+                end = song_raw.index(')">', start)
+                song.album_art_url = song_raw[start:end]
 
             # Get title
-            start = song_raw.index(Hot100Chart.__ARTIST) + len(Hot100Chart.__ARTIST)
+            start = song_raw.index(Hot100Chart.__TITLE) + len(Hot100Chart.__TITLE)
             end = song_raw.index('</h2>', start)
-            song.artist = song_raw[start:end]
+            song.title = song_raw[start:end]
 
             # Get artist
             start = song_raw.index(Hot100Chart.__ARTIST) + len(Hot100Chart.__ARTIST)
-            end = song_raw.index('</span>', start)
+            start = song_raw.index('>', start) + 1
+            end = song_raw.index('</', start)
             song.artist = song_raw[start:end].strip()
 
             # Get peak position
@@ -113,15 +133,16 @@ class Hot100Chart:
             song.wks_on_chart = int(song_raw[start:end])
 
             # Get awards
-            start = song_raw.index(Hot100Chart.__AWARDS_UL) + len(Hot100Chart.__AWARDS_UL)
-            end = song_raw.index('</ul>', start)
-            awards = song_raw[start:end].strip()
-            lines = awards.split('\n')
-            for line in lines:
-                if line.startswith(Hot100Chart.__AWARD_LI):
-                    start = line.index(Hot100Chart.__AWARD_LI_END) + len(Hot100Chart.__AWARD_LI_END)
-                    end = line.index('</li>', start)
-                    song.awards.append(line[start:end])
+            if song_raw.__contains__(Hot100Chart.__AWARDS_UL):
+                start = song_raw.index(Hot100Chart.__AWARDS_UL) + len(Hot100Chart.__AWARDS_UL)
+                end = song_raw.index('</ul>', start)
+                awards = song_raw[start:end].strip()
+                lines = awards.split('\n')
+                for line in lines:
+                    if line.startswith(Hot100Chart.__AWARD_LI):
+                        start = line.index(Hot100Chart.__AWARD_LI_END) + len(Hot100Chart.__AWARD_LI_END)
+                        end = line.index('</li>', start)
+                        song.awards.append(line[start:end])
 
             # Add song to chart
             self.chart.append(song)
