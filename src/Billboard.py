@@ -1,5 +1,5 @@
 import requests
-from datetime import date
+from datetime import date, timedelta
 import os
 
 
@@ -65,8 +65,8 @@ class Hot100Chart:
             if self.week.weekday() != 5:
                 days = 5 - self.week.weekday()
                 days = days % 7
-                timedelta = date(day=days)
-                self.week = self.week + timedelta
+                td = timedelta(day=days)
+                self.week = self.week + td
             else:
                 raise ('unable to find chart for date ' + self.week.isoformat())
 

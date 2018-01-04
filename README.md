@@ -11,4 +11,4 @@ Billboard does not have an active API as far as I can tell. The best bet seems t
 ## Dependencies
 
 * [Python Requests](http://docs.python-requests.org/en/master/)
-
+* [Plotly](https://plot.ly/)
