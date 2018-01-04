@@ -63,7 +63,24 @@ for title, positions in song_positions.items():
 layout = graph_objs.Layout(
     yaxis=dict(
         range=[100, 0],
-        zeroline=False
+        zeroline=False,
+        title='Chart position',
+        titlefont=dict(
+            family='"Open Sans", sans-serif',
+            size=14
+        )
+    ),
+    xaxis=dict(
+        title='Week',
+        titlefont=dict(
+            family='"Open Sans", sans-serif',
+            size=18
+        )
+    ),
+    title="Top Tracks of 2017",
+    titlefont=dict(
+        family='"Open Sans", sans-serif',
+        size=36
     )
 )
 
